@@ -4,13 +4,15 @@ import { useState, useEffect } from "react";
 import { ResizablePanel, ResizablePanelGroup } from "../components/ui/resizable";
 import { CustomResizableHandle } from "../components/ui/custom-resizable";
 import { Button } from "../components/ui/button";
-import { FileTree } from "../components/file-tree";
-import { FileViewer } from "../components/file-viewer";
-import { ChatPanel } from "../components/chat-panel";
 import { LegalFileTree } from "../components/ui/legal-file-tree";
 import { LegalDocumentViewer } from "../components/ui/legal-document-viewer";
 import { LegalChatPanel } from "../components/ui/legal-chat-panel";
-import { MessageSquare, X, Scale, FileText, Gavel } from "lucide-react";
+import { MessageSquare, X, FileText, Search, Bot } from "lucide-react";
+import { PoliceLogo } from "../components/ui/police-logo";
+import { PoliceNav } from "../components/ui/police-nav";
+import { PoliceSearch } from "../components/ui/police-search";
+import { PoliceFooter } from "../components/ui/police-footer";
+import Image from "next/image";
 
 export default function Home() {
   const [files, setFiles] = useState<any[]>([]);
@@ -253,79 +255,95 @@ export default function Home() {
   return (
     <div className="flex flex-col h-screen">
       {/* 头部标题栏 */}
-      <header className="border-b p-4 flex justify-between items-center bg-card">
-        <div className="flex items-center gap-2">
-          <Scale className="h-6 w-6 text-primary" />
-          <h1 className="text-2xl font-bold">刑事案件文件分析系统</h1>
+      <header className="border-b flex flex-col">
+        {/* 顶部标志和搜索区 */}
+        <div className="container mx-auto px-4 py-3 flex justify-between items-center">
+          <PoliceLogo />
+          
+          <div className="flex items-center gap-4">
+            <PoliceSearch />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsChatOpen(!isChatOpen)}
+              className="ml-2"
+            >
+              {isChatOpen ? <X className="h-4 w-4" /> : <MessageSquare className="h-4 w-4" />}
+            </Button>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-1"
-          >
-            <Gavel className="h-4 w-4" />
-            案件管理
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => setIsChatOpen(!isChatOpen)}
-          >
-            {isChatOpen ? <X className="h-4 w-4" /> : <MessageSquare className="h-4 w-4" />}
-          </Button>
-        </div>
+        
+        {/* 导航栏 */}
+        <PoliceNav />
+        
+        {/* 红色装饰条 */}
+        <div className="h-1 bg-red-600"></div>
       </header>
 
-      {/* 主要内容区域 - 三面板布局 */}
-      <ResizablePanelGroup direction="horizontal" className="flex-1">
-        {/* 文件树面板 */}
-        <ResizablePanel defaultSize={20} minSize={15}>
-          <div className="h-full border-r border-black/30">
-            {isLoading ? (
-              <div className="flex items-center justify-center h-full">
-                <div className="animate-pulse text-center">
-                  <FileText className="h-10 w-10 text-muted-foreground mx-auto mb-2" />
-                  <p className="text-sm text-muted-foreground">加载文件中...</p>
-                </div>
-              </div>
-            ) : (
-              <LegalFileTree files={files} onSelectFile={loadFileContent} />
-            )}
+      {/* 主内容区域 */}
+      <div className="flex-1 bg-gray-50">
+        <div className="container mx-auto px-4 py-2">
+          {/* 刑事案件文件分析系统标题 */}
+          <div className="mb-2 border-b border-gray-200 pb-1">
+            <h2 className="text-lg font-bold text-blue-800 text-center">刑事案件文件分析系统</h2>
           </div>
-        </ResizablePanel>
-
-        <CustomResizableHandle />
-
-        {/* 文件内容面板 */}
-        <ResizablePanel defaultSize={isChatOpen ? 50 : 80}>
-          <div className="h-full">
-            <LegalDocumentViewer content={fileContent} filePath={selectedFile} />
-          </div>
-        </ResizablePanel>
-
-        {/* 聊天面板 - 可以关闭 */}
-        {isChatOpen && (
-          <>
-            <CustomResizableHandle />
-            <ResizablePanel defaultSize={30}>
-              <div className="h-full border-l border-black/30 overflow-y-auto">
-                <LegalChatPanel filePath={selectedFile} />
+          
+          {/* 三面板布局 */}
+          <ResizablePanelGroup direction="horizontal" className="bg-white border border-gray-200 rounded-md shadow-sm" style={{ height: 'calc(100vh - 160px)' }}>
+            {/* 文件树面板 */}
+            <ResizablePanel defaultSize={16} minSize={12}>
+              <div className="h-full border-r border-gray-200 pr-1">
+                {isLoading ? (
+                  <div className="flex items-center justify-center h-full">
+                    <div className="animate-pulse text-center">
+                      <FileText className="h-10 w-10 text-gray-400 mx-auto mb-2" />
+                      <p className="text-sm text-gray-500">加载文件中...</p>
+                    </div>
+                  </div>
+                ) : (
+                  <LegalFileTree files={files} onSelectFile={loadFileContent} />
+                )}
               </div>
             </ResizablePanel>
-          </>
-        )}
-      </ResizablePanelGroup>
+
+            <CustomResizableHandle />
+
+            {/* 文件内容面板 */}
+            <ResizablePanel defaultSize={isChatOpen ? 60 : 84}>
+              <div className="h-full px-2 relative">
+                <LegalDocumentViewer content={fileContent} filePath={selectedFile} />
+                {!isChatOpen && (
+                  <div className="absolute bottom-6 right-6 animate-pulse">
+                    <Button 
+                      onClick={() => setIsChatOpen(true)} 
+                      className="bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg p-4 border-2 border-white"
+                      size="icon"
+                      title="打开案件分析助手"
+                    >
+                      <Bot className="h-7 w-7" />
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </ResizablePanel>
+
+            {/* 聊天面板 - 可以关闭 */}
+            {isChatOpen && (
+              <>
+                <CustomResizableHandle />
+                <ResizablePanel defaultSize={24}>
+                  <div className="h-full border-l border-gray-200 pl-1">
+                    <LegalChatPanel filePath={selectedFile} onMinimize={() => setIsChatOpen(false)} />
+                  </div>
+                </ResizablePanel>
+              </>
+            )}
+          </ResizablePanelGroup>
+        </div>
+      </div>
 
       {/* 页脚 */}
-      <footer className="border-t py-2 px-4 text-center text-sm text-muted-foreground flex items-center justify-between">
-        <div>
-          © 2025 河南公安 - 刑事案件文件分析系统
-        </div>
-        <div className="text-xs text-muted-foreground">
-          版本 v1.0.0 | 最后更新: 2025-03-19
-        </div>
-      </footer>
+      <PoliceFooter />
     </div>
   );
 }

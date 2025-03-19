@@ -58,9 +58,10 @@ interface Task {
 interface LegalChatPanelProps {
   filePath: string | null;
   className?: string;
+  onMinimize?: () => void;
 }
 
-export function LegalChatPanel({ filePath, className }: LegalChatPanelProps) {
+export function LegalChatPanel({ filePath, className, onMinimize }: LegalChatPanelProps) {
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -306,16 +307,16 @@ export function LegalChatPanel({ filePath, className }: LegalChatPanelProps) {
   return (
     <div className="chat-panel flex flex-col h-full overflow-hidden">
       <div className="chat-header flex-none">
-        <CardHeader className="flex flex-row items-center justify-between py-2 px-4 border-b">
-          <CardTitle className="text-lg font-semibold flex items-center gap-2">
-            <MessageSquare className="h-5 w-5 text-primary" />
-            案件分析助手
+        <CardHeader className="flex flex-row items-center justify-between py-1 px-2 border-b">
+          <CardTitle className="text-base font-semibold flex items-center gap-1 whitespace-nowrap">
+            <MessageSquare className="h-4 w-4 text-blue-600" />
+            <span className="text-blue-600">案件分析助手</span>
           </CardTitle>
-          <div className="flex items-center space-x-1">
+          <div className="flex items-center">
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" title="历史记录">
-                  <HistoryIcon className="h-4 w-4" />
+                <Button variant="ghost" size="icon" className="h-7 w-7 p-1" title="历史记录">
+                  <HistoryIcon className="h-3.5 w-3.5" />
                 </Button>
               </SheetTrigger>
               <SheetContent side="right">
@@ -352,12 +353,17 @@ export function LegalChatPanel({ filePath, className }: LegalChatPanelProps) {
                 </div>
               </SheetContent>
             </Sheet>
-            <Button variant="ghost" size="icon" onClick={handleNewChat} title="新建聊天">
-              <PlusIcon className="h-4 w-4" />
+            <Button variant="ghost" size="icon" onClick={handleNewChat} className="h-7 w-7 p-1" title="新建聊天">
+              <PlusIcon className="h-3.5 w-3.5" />
             </Button>
-            <Button variant="ghost" size="icon" onClick={handleClearChat} title="清空聊天">
-              <TrashIcon className="h-4 w-4" />
+            <Button variant="ghost" size="icon" onClick={handleClearChat} className="h-7 w-7 p-1" title="清空聊天">
+              <TrashIcon className="h-3.5 w-3.5" />
             </Button>
+            {onMinimize && (
+              <Button variant="ghost" size="icon" onClick={onMinimize} className="h-7 w-7 p-1" title="缩减面板">
+                <X className="h-3.5 w-3.5" />
+              </Button>
+            )}
           </div>
         </CardHeader>
       </div>
