@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from './tabs';
 import { Button } from './button';
 import { Separator } from './separator';
 import { Badge } from './badge';
-import { Highlighter, HighlighterItem } from './highlighter';
+import { Highlighter as BaseHighlighter, HighlighterItem as BaseHighlighterItem } from './highlighter';
 import { 
   BookOpen, 
   FileText, 
@@ -107,7 +107,7 @@ export function LegalDocumentViewer({ content, filePath, onHighlight }: LegalDoc
   };
 
   // 添加高亮
-  const addHighlight = (type: Highlight['type']) => {
+  const addHighlight = (type: 'inconsistency' | 'evidence' | 'legal' | 'timeline' | 'note') => {
     if (selectedText) {
       const newHighlight: Highlight = {
         id: Date.now().toString(),
@@ -192,18 +192,20 @@ export function LegalDocumentViewer({ content, filePath, onHighlight }: LegalDoc
   }
 
   return (
-    <div className="flex flex-col h-full">
-      {metadata && (
-        <LegalDocumentHeader
-          title={metadata.title}
-          documentType={metadata.documentType}
-          caseNumber={metadata.caseNumber}
-          date={metadata.date}
-          status={metadata.status}
-        />
-      )}
+    <div className="flex flex-col h-full overflow-hidden">
+      <div className="flex-none shrink-0 w-full">
+        {metadata && (
+          <LegalDocumentHeader
+            title={metadata.title}
+            documentType={metadata.documentType}
+            caseNumber={metadata.caseNumber}
+            date={metadata.date}
+            status={metadata.status}
+          />
+        )}
+      </div>
       
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
         <div className="border-b">
           <TabsList className="h-10">
             <TabsTrigger value="document" className="flex items-center gap-1">
@@ -222,13 +224,13 @@ export function LegalDocumentViewer({ content, filePath, onHighlight }: LegalDoc
           </TabsList>
         </div>
         
-        <TabsContent value="document" className="flex-1 p-0 m-0">
+        <TabsContent value="document" className="flex-1 p-0 m-0 overflow-hidden" style={{ height: 'calc(100% - 40px)' }}>
           <div 
             ref={contentRef}
-            className="h-full"
+            className="h-full w-full"
             onMouseUp={handleTextSelection}
           >
-            <ScrollArea className="h-full">
+            <ScrollArea className="h-full w-full overflow-auto" scrollHideDelay={0}>
               <div className="p-4">
                 {selectedText && (
                   <div className="sticky top-0 z-10 bg-background p-2 mb-4 border rounded-md shadow-sm">
@@ -257,19 +259,19 @@ export function LegalDocumentViewer({ content, filePath, onHighlight }: LegalDoc
                   </div>
                 )}
                 
-                <Highlighter
+                <BaseHighlighter
                   content={content}
-                  highlights={highlights}
+                  highlights={highlights as any[]}
                   renderHighlight={(highlight) => {
-                    const style = getHighlightStyle(highlight.type);
+                    const style = getHighlightStyle(highlight.type as 'inconsistency' | 'evidence' | 'legal' | 'timeline' | 'note');
                     return (
-                      <HighlighterItem
+                      <BaseHighlighterItem
                         key={highlight.id}
-                        highlight={highlight}
+                        highlight={highlight as any}
                         className={`border px-1 rounded ${style.color}`}
                       >
                         {highlight.text}
-                      </HighlighterItem>
+                      </BaseHighlighterItem>
                     );
                   }}
                 >
@@ -281,14 +283,14 @@ export function LegalDocumentViewer({ content, filePath, onHighlight }: LegalDoc
                       {content}
                     </ReactMarkdown>
                   </div>
-                </Highlighter>
+                </BaseHighlighter>
               </div>
             </ScrollArea>
           </div>
         </TabsContent>
         
-        <TabsContent value="highlights" className="flex-1 p-0 m-0">
-          <ScrollArea className="h-full">
+        <TabsContent value="highlights" className="flex-1 p-0 m-0 overflow-hidden" style={{ height: 'calc(100% - 40px)' }}>
+          <ScrollArea className="h-full overflow-auto" scrollHideDelay={0}>
             <div className="p-4 space-y-4">
               {highlights.length === 0 ? (
                 <div className="text-center py-8">
@@ -351,25 +353,25 @@ export function LegalDocumentViewer({ content, filePath, onHighlight }: LegalDoc
   );
 }
 
-// 高亮组件
-interface HighlighterProps {
+// 本地高亮组件（不使用，改用导入的BaseHighlighter）
+interface DocumentHighlighterProps {
   content: string;
   highlights: Highlight[];
   renderHighlight: (highlight: Highlight) => React.ReactNode;
   children: React.ReactNode;
 }
 
-function Highlighter({ content, highlights, renderHighlight, children }: HighlighterProps) {
-  return children;
+function DocumentHighlighter({ content, highlights, renderHighlight, children }: DocumentHighlighterProps) {
+  return <>{children}</>;
 }
 
-interface HighlighterItemProps {
+interface DocumentHighlighterItemProps {
   highlight: Highlight;
   className?: string;
   children: React.ReactNode;
 }
 
-function HighlighterItem({ highlight, className, children }: HighlighterItemProps) {
+function DocumentHighlighterItem({ highlight, className, children }: DocumentHighlighterItemProps) {
   return (
     <span className={className} title={highlight.note}>
       {children}
