@@ -304,257 +304,263 @@ export function LegalChatPanel({ filePath, className }: LegalChatPanelProps) {
   };
 
   return (
-    <Card className={cn("flex flex-col h-full border-0 rounded-none shadow-none", className)}>
-      <CardHeader className="flex flex-row items-center justify-between py-2 px-4 border-b">
-        <CardTitle className="text-lg font-semibold flex items-center gap-2">
-          <MessageSquare className="h-5 w-5 text-primary" />
-          案件分析助手
-        </CardTitle>
-        <div className="flex items-center space-x-1">
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" title="历史记录">
-                <HistoryIcon className="h-4 w-4" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="right">
-              <SheetHeader>
-                <SheetTitle>历史对话记录</SheetTitle>
-              </SheetHeader>
-              <div className="py-4">
-                {chatHistories.length === 0 ? (
-                  <div className="text-center py-8">
-                    <HistoryIcon className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
-                    <p className="text-muted-foreground">暂无历史记录</p>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {chatHistories.map((history) => (
-                      <div
-                        key={history.id}
-                        className="flex items-center justify-between p-3 rounded-md hover:bg-accent cursor-pointer border"
-                        onClick={() => loadChatHistory(history.id)}
-                      >
-                        <div className="flex flex-col">
-                          <span className="text-sm font-medium truncate max-w-[200px]">{history.title}</span>
-                          <span className="text-xs text-muted-foreground">
-                            {history.messageCount}条消息 · {history.timestamp.toLocaleDateString()}
-                          </span>
+    <div className="chat-panel flex flex-col h-full overflow-hidden">
+      <div className="chat-header flex-none">
+        <CardHeader className="flex flex-row items-center justify-between py-2 px-4 border-b">
+          <CardTitle className="text-lg font-semibold flex items-center gap-2">
+            <MessageSquare className="h-5 w-5 text-primary" />
+            案件分析助手
+          </CardTitle>
+          <div className="flex items-center space-x-1">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" title="历史记录">
+                  <HistoryIcon className="h-4 w-4" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right">
+                <SheetHeader>
+                  <SheetTitle>历史对话记录</SheetTitle>
+                </SheetHeader>
+                <div className="py-4">
+                  {chatHistories.length === 0 ? (
+                    <div className="text-center py-8">
+                      <HistoryIcon className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
+                      <p className="text-muted-foreground">暂无历史记录</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {chatHistories.map((history) => (
+                        <div
+                          key={history.id}
+                          className="flex items-center justify-between p-3 rounded-md hover:bg-accent cursor-pointer border"
+                          onClick={() => loadChatHistory(history.id)}
+                        >
+                          <div className="flex flex-col">
+                            <span className="text-sm font-medium truncate max-w-[200px]">{history.title}</span>
+                            <span className="text-xs text-muted-foreground">
+                              {history.messageCount}条消息 · {history.timestamp.toLocaleDateString()}
+                            </span>
+                          </div>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <FileText className="h-4 w-4" />
+                          </Button>
                         </div>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <FileText className="h-4 w-4" />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </SheetContent>
+            </Sheet>
+            <Button variant="ghost" size="icon" onClick={handleNewChat} title="新建聊天">
+              <PlusIcon className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="icon" onClick={handleClearChat} title="清空聊天">
+              <TrashIcon className="h-4 w-4" />
+            </Button>
+          </div>
+        </CardHeader>
+      </div>
+
+      <div className="chat-body flex-1 overflow-y-auto">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
+          <TabsList className="grid w-full grid-cols-2 px-4 py-2 bg-transparent">
+            <TabsTrigger value="chat" className="text-sm">
+              对话
+            </TabsTrigger>
+            <TabsTrigger value="tasks" className="text-sm">
+              分析任务
+              {tasks.length > 0 && (
+                <Badge variant="secondary" className="ml-1.5">
+                  {tasks.filter(t => t.status === 'completed').length}/{tasks.length}
+                </Badge>
+              )}
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="chat" className="flex-1 p-0 m-0 overflow-hidden">
+            <ScrollArea className="flex-1 h-[calc(100%-60px)]">
+              <div className="p-4 space-y-4">
+                {messages.length === 0 ? (
+                  <div className="flex items-center justify-center h-[300px]">
+                    <div className="text-center space-y-3">
+                      <Bot className="h-12 w-12 text-primary/50 mx-auto" />
+                      <p className="text-muted-foreground text-center">
+                        您可以询问关于案件文件的任何问题
+                      </p>
+                      <div className="flex flex-col gap-2 mt-4">
+                        <Button variant="outline" className="justify-start text-sm" onClick={() => setInput("这个案件的证据链是否完整？")}>
+                          <Scale className="h-4 w-4 mr-2" />
+                          这个案件的证据链是否完整？
+                        </Button>
+                        <Button variant="outline" className="justify-start text-sm" onClick={() => setInput("有哪些法律条文适用性问题？")}>
+                          <FileText className="h-4 w-4 mr-2" />
+                          有哪些法律条文适用性问题？
+                        </Button>
+                        <Button variant="outline" className="justify-start text-sm" onClick={() => setInput("时间线是否存在逻辑问题？")}>
+                          <Clock className="h-4 w-4 mr-2" />
+                          时间线是否存在逻辑问题？
                         </Button>
                       </div>
+                    </div>
+                  </div>
+                ) : (
+                  messages.map((message) => (
+                    <div
+                      key={message.id}
+                      className={`flex ${
+                        message.role === 'user' ? 'justify-end' : 'justify-start'
+                      }`}
+                    >
+                      {message.role !== 'user' && (
+                        <Avatar className="h-8 w-8 mr-2">
+                          <AvatarImage src="/ai-avatar.png" />
+                          <AvatarFallback className="bg-primary text-primary-foreground">
+                            {message.role === 'thinking' ? '思' : message.role === 'system' ? '系' : 'AI'}
+                          </AvatarFallback>
+                        </Avatar>
+                      )}
+                      
+                      <div className="flex flex-col max-w-[80%]">
+                        <div
+                          className={cn(
+                            "rounded-lg p-3",
+                            message.role === 'user'
+                              ? 'bg-primary text-primary-foreground rounded-tr-none'
+                              : message.role === 'thinking'
+                              ? 'bg-muted text-muted-foreground'
+                              : message.role === 'system'
+                              ? 'bg-destructive text-destructive-foreground'
+                              : 'bg-accent rounded-tl-none'
+                          )}
+                        >
+                          <div className="whitespace-pre-wrap">{message.content}</div>
+                        </div>
+                        
+                        {message.references && message.references.length > 0 && (
+                          <div className="mt-1 space-y-1">
+                            <p className="text-xs text-muted-foreground ml-1">引用来源:</p>
+                            {message.references.map((ref, index) => (
+                              <div 
+                                key={index}
+                                className="text-xs bg-muted/50 p-1.5 rounded border border-border flex items-start"
+                              >
+                                <FileText className="h-3 w-3 mr-1 mt-0.5 flex-shrink-0" />
+                                <div>
+                                  <p className="font-medium">{ref.filePath}</p>
+                                  <p className="text-muted-foreground line-clamp-1">{ref.text}</p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        
+                        <div className="text-xs mt-1 opacity-70 text-right">
+                          {message.timestamp.toLocaleTimeString()}
+                        </div>
+                      </div>
+                      
+                      {message.role === 'user' && (
+                        <Avatar className="h-8 w-8 ml-2">
+                          <AvatarImage src="/user-avatar.png" />
+                          <AvatarFallback className="bg-muted">
+                            <User className="h-4 w-4" />
+                          </AvatarFallback>
+                        </Avatar>
+                      )}
+                    </div>
+                  ))
+                )}
+                <div ref={messagesEndRef} />
+              </div>
+            </ScrollArea>
+          </TabsContent>
+          
+          <TabsContent value="tasks" className="flex-1 p-0 m-0 overflow-hidden">
+            <ScrollArea className="h-[calc(100%-60px)]">
+              <div className="p-4 space-y-4">
+                {tasks.length === 0 ? (
+                  <div className="flex items-center justify-center h-[300px]">
+                    <div className="text-center space-y-2">
+                      <Sparkles className="h-12 w-12 text-primary/50 mx-auto" />
+                      <p className="text-muted-foreground">尚未开始分析任务</p>
+                      <p className="text-sm text-muted-foreground">
+                        在对话中提问以开始分析
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {tasks.map((task) => (
+                      <Card key={task.id} className="overflow-hidden">
+                        <CardContent className="p-3">
+                          <div className="flex items-start gap-2">
+                            <div className={cn(
+                              "p-2 rounded-full",
+                              task.status === 'completed' 
+                                ? "bg-green-100 text-green-800"
+                                : task.status === 'failed'
+                                ? "bg-red-100 text-red-800"
+                                : "bg-amber-100 text-amber-800"
+                            )}>
+                              {task.status === 'completed' ? (
+                                <CheckCircle2 className="h-4 w-4" />
+                              ) : task.status === 'failed' ? (
+                                <X className="h-4 w-4" />
+                              ) : (
+                                <Clock className="h-4 w-4" />
+                              )}
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex justify-between items-start">
+                                <div className="font-medium">{task.description}</div>
+                                <Badge variant="outline" className={cn(
+                                  task.status === 'completed' 
+                                    ? "bg-green-100 text-green-800 border-green-200"
+                                    : task.status === 'failed'
+                                    ? "bg-red-100 text-red-800 border-red-200"
+                                    : "bg-amber-100 text-amber-800 border-amber-200"
+                                )}>
+                                  {task.status === 'completed' ? '已完成' : task.status === 'failed' ? '失败' : '进行中'}
+                                </Badge>
+                              </div>
+                              {task.result && (
+                                <p className="text-sm mt-2">{task.result}</p>
+                              )}
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
                     ))}
                   </div>
                 )}
               </div>
-            </SheetContent>
-          </Sheet>
-          <Button variant="ghost" size="icon" onClick={handleNewChat} title="新建聊天">
-            <PlusIcon className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="icon" onClick={handleClearChat} title="清空聊天">
-            <TrashIcon className="h-4 w-4" />
-          </Button>
-        </div>
-      </CardHeader>
-      
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
-        <TabsList className="grid w-full grid-cols-2 px-4 py-2 bg-transparent">
-          <TabsTrigger value="chat" className="text-sm">
-            对话
-          </TabsTrigger>
-          <TabsTrigger value="tasks" className="text-sm">
-            分析任务
-            {tasks.length > 0 && (
-              <Badge variant="secondary" className="ml-1.5">
-                {tasks.filter(t => t.status === 'completed').length}/{tasks.length}
-              </Badge>
-            )}
-          </TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="chat" className="flex-1 p-0 m-0 overflow-hidden">
-          <ScrollArea className="flex-1 h-[calc(100%-60px)]">
-            <div className="p-4 space-y-4">
-              {messages.length === 0 ? (
-                <div className="flex items-center justify-center h-[300px]">
-                  <div className="text-center space-y-3">
-                    <Bot className="h-12 w-12 text-primary/50 mx-auto" />
-                    <p className="text-muted-foreground text-center">
-                      您可以询问关于案件文件的任何问题
-                    </p>
-                    <div className="flex flex-col gap-2 mt-4">
-                      <Button variant="outline" className="justify-start text-sm" onClick={() => setInput("这个案件的证据链是否完整？")}>
-                        <Scale className="h-4 w-4 mr-2" />
-                        这个案件的证据链是否完整？
-                      </Button>
-                      <Button variant="outline" className="justify-start text-sm" onClick={() => setInput("有哪些法律条文适用性问题？")}>
-                        <FileText className="h-4 w-4 mr-2" />
-                        有哪些法律条文适用性问题？
-                      </Button>
-                      <Button variant="outline" className="justify-start text-sm" onClick={() => setInput("时间线是否存在逻辑问题？")}>
-                        <Clock className="h-4 w-4 mr-2" />
-                        时间线是否存在逻辑问题？
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                messages.map((message) => (
-                  <div
-                    key={message.id}
-                    className={`flex ${
-                      message.role === 'user' ? 'justify-end' : 'justify-start'
-                    }`}
-                  >
-                    {message.role !== 'user' && (
-                      <Avatar className="h-8 w-8 mr-2">
-                        <AvatarImage src="/ai-avatar.png" />
-                        <AvatarFallback className="bg-primary text-primary-foreground">
-                          {message.role === 'thinking' ? '思' : message.role === 'system' ? '系' : 'AI'}
-                        </AvatarFallback>
-                      </Avatar>
-                    )}
-                    
-                    <div className="flex flex-col max-w-[80%]">
-                      <div
-                        className={cn(
-                          "rounded-lg p-3",
-                          message.role === 'user'
-                            ? 'bg-primary text-primary-foreground rounded-tr-none'
-                            : message.role === 'thinking'
-                            ? 'bg-muted text-muted-foreground'
-                            : message.role === 'system'
-                            ? 'bg-destructive text-destructive-foreground'
-                            : 'bg-accent rounded-tl-none'
-                        )}
-                      >
-                        <div className="whitespace-pre-wrap">{message.content}</div>
-                      </div>
-                      
-                      {message.references && message.references.length > 0 && (
-                        <div className="mt-1 space-y-1">
-                          <p className="text-xs text-muted-foreground ml-1">引用来源:</p>
-                          {message.references.map((ref, index) => (
-                            <div 
-                              key={index}
-                              className="text-xs bg-muted/50 p-1.5 rounded border border-border flex items-start"
-                            >
-                              <FileText className="h-3 w-3 mr-1 mt-0.5 flex-shrink-0" />
-                              <div>
-                                <p className="font-medium">{ref.filePath}</p>
-                                <p className="text-muted-foreground line-clamp-1">{ref.text}</p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      
-                      <div className="text-xs mt-1 opacity-70 text-right">
-                        {message.timestamp.toLocaleTimeString()}
-                      </div>
-                    </div>
-                    
-                    {message.role === 'user' && (
-                      <Avatar className="h-8 w-8 ml-2">
-                        <AvatarImage src="/user-avatar.png" />
-                        <AvatarFallback className="bg-muted">
-                          <User className="h-4 w-4" />
-                        </AvatarFallback>
-                      </Avatar>
-                    )}
-                  </div>
-                ))
-              )}
-              <div ref={messagesEndRef} />
+            </ScrollArea>
+          </TabsContent>
+        </Tabs>
+      </div>
+
+      <div className="chat-footer flex-none">
+        <CardFooter className="p-4 border-t mt-auto">
+          <form onSubmit={handleSubmit} className="flex w-full space-x-2">
+            <Textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="输入你的问题..."
+              className="flex-1 min-h-[60px] max-h-[120px] resize-y"
+              disabled={isLoading}
+            />
+            <div className="flex flex-col gap-2">
+              <Button type="button" size="icon" variant="outline" disabled={isLoading} title="附加文件">
+                <PaperclipIcon className="h-4 w-4" />
+              </Button>
+              <Button type="submit" size="icon" disabled={isLoading || !input.trim()} className="bg-primary">
+                <SendIcon className="h-4 w-4" />
+              </Button>
             </div>
-          </ScrollArea>
-          
-          <CardFooter className="p-4 border-t mt-auto">
-            <form onSubmit={handleSubmit} className="flex w-full space-x-2">
-              <Textarea
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="输入你的问题..."
-                className="flex-1 min-h-[60px] max-h-[120px] resize-y"
-                disabled={isLoading}
-              />
-              <div className="flex flex-col gap-2">
-                <Button type="button" size="icon" variant="outline" disabled={isLoading} title="附加文件">
-                  <PaperclipIcon className="h-4 w-4" />
-                </Button>
-                <Button type="submit" size="icon" disabled={isLoading || !input.trim()} className="bg-primary">
-                  <SendIcon className="h-4 w-4" />
-                </Button>
-              </div>
-            </form>
-          </CardFooter>
-        </TabsContent>
-        
-        <TabsContent value="tasks" className="flex-1 p-0 m-0 overflow-hidden">
-          <ScrollArea className="h-[calc(100%-60px)]">
-            <div className="p-4 space-y-4">
-              {tasks.length === 0 ? (
-                <div className="flex items-center justify-center h-[300px]">
-                  <div className="text-center space-y-2">
-                    <Sparkles className="h-12 w-12 text-primary/50 mx-auto" />
-                    <p className="text-muted-foreground">尚未开始分析任务</p>
-                    <p className="text-sm text-muted-foreground">
-                      在对话中提问以开始分析
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {tasks.map((task) => (
-                    <Card key={task.id} className="overflow-hidden">
-                      <CardContent className="p-3">
-                        <div className="flex items-start gap-2">
-                          <div className={cn(
-                            "p-2 rounded-full",
-                            task.status === 'completed' 
-                              ? "bg-green-100 text-green-800"
-                              : task.status === 'failed'
-                              ? "bg-red-100 text-red-800"
-                              : "bg-amber-100 text-amber-800"
-                          )}>
-                            {task.status === 'completed' ? (
-                              <CheckCircle2 className="h-4 w-4" />
-                            ) : task.status === 'failed' ? (
-                              <X className="h-4 w-4" />
-                            ) : (
-                              <Clock className="h-4 w-4" />
-                            )}
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex justify-between items-start">
-                              <div className="font-medium">{task.description}</div>
-                              <Badge variant="outline" className={cn(
-                                task.status === 'completed' 
-                                  ? "bg-green-100 text-green-800 border-green-200"
-                                  : task.status === 'failed'
-                                  ? "bg-red-100 text-red-800 border-red-200"
-                                  : "bg-amber-100 text-amber-800 border-amber-200"
-                              )}>
-                                {task.status === 'completed' ? '已完成' : task.status === 'failed' ? '失败' : '进行中'}
-                              </Badge>
-                            </div>
-                            {task.result && (
-                              <p className="text-sm mt-2">{task.result}</p>
-                            )}
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              )}
-            </div>
-          </ScrollArea>
-        </TabsContent>
-      </Tabs>
-    </Card>
+          </form>
+        </CardFooter>
+      </div>
+    </div>
   );
 }
