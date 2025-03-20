@@ -1,0 +1,21 @@
+# OpenManus全局配置
+
+# LLM配置
+[llm]
+model = "gpt-4o"
+base_url = "https://api.openai.com/v1"
+api_key = ""  # 请在环境变量中设置OPENAI_API_KEY
+max_tokens = 4096
+temperature = 0.0
+
+# 视觉模型配置
+[llm.vision]
+model = "gpt-4o"
+base_url = "https://api.openai.com/v1"
+api_key = ""  # 请在环境变量中设置OPENAI_API_KEY
+
+# 法律分析配置
+[legal_analysis]
+evidence_analysis_prompt = "分析以下法律文档中的证据链完整性，找出物证、书证和证人证言之间的对应关系，以及可能存在的不一致或缺失："
+legal_provisions_prompt = "验证以下法律文档中罪名与法条的匹配度，指出可能存在的不适用或错误引用的法律条文："
+timeline_check_prompt = "检查以下法律文档中的时间线逻辑，验证侦查、批捕、起诉等时间节点的合规性，找出可能存在的时间矛盾："
