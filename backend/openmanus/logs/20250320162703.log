@@ -1,0 +1,7 @@
+2025-03-20 16:27:03.826 | INFO     | app.agent.planning:create_initial_plan:203 - Creating initial plan with ID: plan_1742459223
+2025-03-20 16:27:04.166 | ERROR    | app.llm:ask_tool:759 - OpenAI API error: Error code: 403 - {'error': {'type': 'forbidden', 'message': 'Request not allowed'}}
+2025-03-20 16:27:04.166 | ERROR    | app.llm:ask_tool:765 - API error: Error code: 403 - {'error': {'type': 'forbidden', 'message': 'Request not allowed'}}
+2025-03-20 16:27:05.362 | ERROR    | app.llm:ask_tool:759 - OpenAI API error: Error code: 403 - {'error': {'type': 'forbidden', 'message': 'Request not allowed'}}
+2025-03-20 16:27:05.362 | ERROR    | app.llm:ask_tool:765 - API error: Error code: 403 - {'error': {'type': 'forbidden', 'message': 'Request not allowed'}}
+2025-03-20 16:27:07.482 | ERROR    | app.llm:ask_tool:759 - OpenAI API error: Error code: 403 - {'error': {'type': 'forbidden', 'message': 'Request not allowed'}}
+2025-03-20 16:27:07.482 | ERROR    | app.llm:ask_tool:765 - API error: Error code: 403 - {'error': {'type': 'forbidden', 'message': 'Request not allowed'}}
