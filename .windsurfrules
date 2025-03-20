@@ -13,7 +13,7 @@ graph TD
   A[前端Next.js] --> B[API路由]
   B --> C[AI服务层]
   C --> D[OpenManus API]
-  C --> E[Postgres数据库]
+  C --> E[SQLite数据库]
   C --> F[临时文件系统]
 ```
 ## 技术栈
@@ -22,7 +22,7 @@ graph TD
 - typescript
 - 使用shadcn/ui构建专业级法律系统UI
 - 后端使用 python
-- 数据库使用postgresql云数据库
+- 数据库使用sqlite数据库
 
 ## 前端页面展示
     - 左侧为文件列表，中间为文件内容，右侧为聊天交互窗口，用来展示文件分析结果。
