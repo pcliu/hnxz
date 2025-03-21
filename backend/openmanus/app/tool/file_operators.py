@@ -152,7 +152,7 @@ class SandboxFileOperator(FileOperator):
             )
         except TimeoutError as exc:
             raise TimeoutError(
-                f"Command '{cmd}' timed out after {timeout} seconds in sandbox"
+                f"命令 '{cmd}' 在沙箱中运行超过 {timeout} 秒后超时"
             ) from exc
         except Exception as exc:
-            return 1, "", f"Error executing command in sandbox: {str(exc)}"
+            return 1, "", f"在沙箱中执行命令时出错：{str(exc)}"

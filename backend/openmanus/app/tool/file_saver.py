@@ -64,4 +64,4 @@ The tool accepts content and a file path, and saves the content to that location
 
             return f"Content successfully saved to {full_path}"
         except Exception as e:
-            return f"Error saving file: {str(e)}"
+            return f"保存文件时出错：{str(e)}"

@@ -165,8 +165,8 @@ class ChatService:
             
             # 设置超时时间
             try:
-                # 运行代理，并设置超时时间为30秒
-                result = await asyncio.wait_for(agent.run(prompt), timeout=30)
+                # 运行代理，并设置超时时间为300秒（5分钟）
+                result = await asyncio.wait_for(agent.run(prompt), timeout=300)
                 print(f"OpenManus代理运行完成，结果: {result[:100]}...")
             except asyncio.TimeoutError:
                 print("代理运行超时，返回默认答案")

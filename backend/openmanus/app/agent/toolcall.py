@@ -189,30 +189,30 @@ class ToolCallAgent(ReActAgent):
 
                 # Format result for display
                 observation = (
-                    f"Observed output of cmd `{name}` executed:\n{str(result)}"
+                    f"已执行命令 `{name}` 的输出结果：\n{str(result)}"
                     if result
-                    else f"Cmd `{name}` completed with no output"
+                    else f"命令 `{name}` 已执行完毕，无输出结果"
                 )
                 return observation
 
             # Format result for display (standard case)
             observation = (
-                f"Observed output of cmd `{name}` executed:\n{str(result)}"
+                f"已执行命令 `{name}` 的输出结果：\n{str(result)}"
                 if result
-                else f"Cmd `{name}` completed with no output"
+                else f"命令 `{name}` 已执行完毕，无输出结果"
             )
 
             return observation
         except json.JSONDecodeError:
-            error_msg = f"Error parsing arguments for {name}: Invalid JSON format"
+            error_msg = f"解析命令 {name} 的参数时出错：无效的JSON格式"
             logger.error(
-                f"📝 Oops! The arguments for '{name}' don't make sense - invalid JSON, arguments:{command.function.arguments}"
+                f"📝 糟糕！命令 '{name}' 的参数无效 - JSON格式错误，参数：{command.function.arguments}"
             )
-            return f"Error: {error_msg}"
+            return f"错误：{error_msg}"
         except Exception as e:
-            error_msg = f"⚠️ Tool '{name}' encountered a problem: {str(e)}"
+            error_msg = f"⚠️ 工具 '{name}' 遇到问题：{str(e)}"
             logger.exception(error_msg)
-            return f"Error: {error_msg}"
+            return f"错误：{error_msg}"
 
     async def _handle_special_tool(self, name: str, result: Any, **kwargs):
         """Handle special tool execution and state changes"""
@@ -221,7 +221,7 @@ class ToolCallAgent(ReActAgent):
 
         if self._should_finish_execution(name=name, result=result, **kwargs):
             # Set agent state to finished
-            logger.info(f"🏁 Special tool '{name}' has completed the task!")
+            logger.info(f"🏁 特殊工具 '{name}' 已完成任务！")
             self.state = AgentState.FINISHED
 
     @staticmethod

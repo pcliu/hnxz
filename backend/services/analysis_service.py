@@ -38,8 +38,8 @@ class AnalysisService:
 """
         
         try:
-            # 运行代理
-            result = await agent.run(prompt)
+            # 运行代理，设置超时时间为300秒（5分钟）
+            result = await asyncio.wait_for(agent.run(prompt), timeout=300)
             
             # 保存分析结果
             analysis_result = {
@@ -90,8 +90,8 @@ class AnalysisService:
 """
         
         try:
-            # 运行代理
-            result = await agent.run(prompt)
+            # 运行代理，设置超时时间为300秒（5分钟）
+            result = await asyncio.wait_for(agent.run(prompt), timeout=300)
             
             return {
                 "status": "success",
@@ -126,8 +126,8 @@ class AnalysisService:
 """
         
         try:
-            # 运行代理
-            result = await agent.run(prompt)
+            # 运行代理，设置超时时间为300秒（5分钟）
+            result = await asyncio.wait_for(agent.run(prompt), timeout=300)
             
             return {
                 "status": "success",
@@ -162,8 +162,8 @@ class AnalysisService:
 """
         
         try:
-            # 运行代理
-            result = await agent.run(prompt)
+            # 运行代理，设置超时时间为300秒（5分钟）
+            result = await asyncio.wait_for(agent.run(prompt), timeout=300)
             
             return {
                 "status": "success",
