@@ -50,8 +50,8 @@ graph TD
 - 数据可以是 mock 的，数据在 `business` 文件夹下
 
 ## 后端代码逻辑
-- 使用 openmanus 来实现后端的 Agent 功能，openmanus 的 githu地址为：https://github.com/mannaandpoem/OpenManus.git
-- openmanus是由 python 来实现的
+- 使用 OpenManus 来实现后端的 Agent 功能
+- OpenManus 是由 Python 来实现的
 
 
 
