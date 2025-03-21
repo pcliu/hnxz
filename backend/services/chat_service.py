@@ -2,8 +2,8 @@ import asyncio
 import json
 import uuid
 from typing import AsyncGenerator, Dict, List, Optional, Any
-from backend.openmanus.app.agent.manus import Manus
-from backend.openmanus.app.tool import FileOperatorsTool
+from openmanus.app.agent.manus import Manus
+from openmanus.app.tool import FileOperatorsTool
 
 class ChatService:
     """聊天服务，处理与OpenManus的交互"""
@@ -61,67 +61,53 @@ class ChatService:
         file_tool = FileOperatorsTool()
         agent.available_tools.add_tool(file_tool)
         
-        # 构建分析提示语
-        prompt = f"""
-你是一个专业的法律分析助手，需要回答用户关于刑事案件的问题。
+        # 更明确的分析提示语
+        prompt = f"""你是一个专业的法律分析助手，需要回答用户关于刑事案件的问题。
 
 用户问题: {message}
 
-请按照以下步骤进行分析：
+请按照以下步骤回答问题：
 
-1. 首先，使用 file_operators 工具列出工作区中的所有目录，了解文件组织结构
-   - 使用参数：{{
-     "action": "list_directory",
-     "path": "."
-   }}
+1. 首先使用 file_operators 工具列出当前目录下的文件：
+   {{"action": "list_directory", "path": "."}}
 
-2. 根据目录结构，逐个查看各个文件夹中的文件
-   - 例如：{{
-     "action": "list_directory",
-     "path": "诉讼文书卷"
-   }}
+2. 查看“故意杀人起诉 诉讼文书卷”目录下的文件：
+   {{"action": "list_directory", "path": "故意杀人起诉 诉讼文书卷"}}
 
-3. 选择与用户问题相关的文件进行阅读
-   - 使用参数：{{
-     "action": "read_file",
-     "path": "文件路径"
-   }}
+3. 阅读“故意杀人起诉 诉讼文书卷/起诉书.md”文件内容：
+   {{"action": "read_file", "path": "故意杀人起诉 诉讼文书卷/起诉书.md"}}
 
-4. 你也可以使用搜索功能查找特定信息：
-   - 使用参数：{{
-     "action": "search_files",
-     "path": ".",
-     "query": "关键词"
-   }}
+4. 阅读“故意杀人起诉 诉讼文书卷/判决书.md”文件内容：
+   {{"action": "read_file", "path": "故意杀人起诉 诉讼文书卷/判决书.md"}}
 
-5. 在分析过程中，请特别关注：
-   - 证据链完整性：物证/书证/证人证言之间的对应关系是否一致
-   - 法律条文适用性：罪名与法条的匹配度是否合理
-   - 时间线逻辑：侦查/批捕/起诉时间节点是否合规
+5. 根据以上文件内容，简要回答用户问题。包括案件的基本情况、罪名、判决结果等。
 
-6. 请以下面的格式提供分析结果：
-   - 清晰列出你的分析过程
-   - 提供具体的文件引用和证据支持
-   - 对于发现的问题，给出明确的解释
-
-请开始你的分析工作。在分析过程中，请清晰地指出你正在查看的文件和你从中发现的关键信息。
+请直接执行上述步骤，不要添加额外的分析或解释。
 """
         
-        # 设置回调函数来捕获代理的输出
-        async def output_callback(output: str):
-            # 更新思考消息
-            yield {
-                "type": "thinking_update",
-                "content": output,
-                "chat_id": chat_id,
-                "thinking_id": thinking_id
-            }
-        
-        agent.set_output_callback(output_callback)
+        # OpenManus的Manus对象没有set_output_callback方法
+        # 我们将在运行代理后直接处理结果
         
         try:
-            # 运行代理
-            result = await agent.run(prompt)
+            # 添加调试日志
+            print("开始运行OpenManus代理")
+            
+            # 设置工作目录为 business 文件夹
+            import os
+            # 获取项目根目录，而不是 backend 目录
+            project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            business_dir = os.path.join(project_root, "business")
+            print(f"设置工作目录为: {business_dir}")
+            os.chdir(business_dir)
+            
+            # 设置超时时间
+            try:
+                # 运行代理，并设置超时时间为30秒
+                result = await asyncio.wait_for(agent.run(prompt), timeout=30)
+                print(f"OpenManus代理运行完成，结果: {result[:100]}...")
+            except asyncio.TimeoutError:
+                print("代理运行超时，返回默认答案")
+                result = "对不起，分析过程超时。请尝试提问更具体的问题，或者简化您的问题。"
             
             # 创建助手回复
             assistant_message = {
@@ -143,6 +129,11 @@ class ChatService:
             }
             
         except Exception as e:
+            # 添加详细的错误日志
+            print(f"OpenManus代理运行出错: {str(e)}")
+            import traceback
+            print(f"错误详情: {traceback.format_exc()}")
+            
             # 处理错误
             error_message = {
                 "id": str(uuid.uuid4()),

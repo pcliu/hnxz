@@ -2,8 +2,8 @@ import asyncio
 import json
 import uuid
 from typing import Dict, Any, List
-from backend.openmanus.app.agent.manus import Manus
-from backend.openmanus.app.tool import FileOperatorsTool
+from openmanus.app.agent.manus import Manus
+from openmanus.app.tool import FileOperatorsTool
 
 class AnalysisService:
     """分析服务，处理与OpenManus的交互进行文档分析"""

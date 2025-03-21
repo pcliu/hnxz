@@ -50,3 +50,4 @@ dist/
 
 # 配置文件
 backend/openmanus/config/config.toml
+backend/openmanus/logs/
