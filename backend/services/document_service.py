@@ -1,67 +1,93 @@
 import os
+import asyncio
 import json
+from typing import Dict, Any, List, Optional
 from pathlib import Path
-from typing import List, Dict, Any, Optional
 
 class DocumentService:
-    """文档服务，用于处理文档的读取和管理"""
+    """文档服务，处理文件读取和管理"""
     
     def __init__(self):
-        # 文档根目录
-        self.documents_dir = Path(os.getcwd()) / "business"
+        # 设置业务文件目录
+        self.business_dir = Path(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../business')))
+        self.documents_cache = {}  # 缓存文档内容
     
     async def get_all_documents(self) -> List[Dict[str, Any]]:
         """获取所有文档列表"""
         documents = []
         
-        # 递归获取文件夹中的所有文件
-        for path in self.documents_dir.glob("**/*"):
-            if path.is_file():
-                relative_path = path.relative_to(os.getcwd())
-                documents.append({
-                    "id": str(relative_path),
-                    "name": path.name,
-                    "path": str(relative_path),
-                    "type": "file"
-                })
+        # 递归遍历业务目录
+        for root, dirs, files in os.walk(self.business_dir):
+            for file in files:
+                if file.endswith('.md'):
+                    file_path = os.path.join(root, file)
+                    rel_path = os.path.relpath(file_path, self.business_dir)
+                    
+                    # 创建文档对象
+                    document = {
+                        "id": rel_path,
+                        "name": file,
+                        "path": rel_path,
+                        "type": "file",
+                        "size": os.path.getsize(file_path),
+                        "last_modified": os.path.getmtime(file_path)
+                    }
+                    
+                    documents.append(document)
+        
+        # 按路径排序
+        documents.sort(key=lambda x: x["path"])
         
         return documents
     
     async def get_document(self, document_id: str) -> Optional[Dict[str, Any]]:
         """获取单个文档内容"""
-        # 构建完整路径
-        full_path = Path(os.getcwd()) / document_id
+        # 检查缓存
+        if document_id in self.documents_cache:
+            return self.documents_cache[document_id]
         
-        # 安全检查：确保文件路径不超出项目根目录
-        try:
-            relative_path = full_path.relative_to(os.getcwd())
-            if str(relative_path).startswith("..") or os.path.isabs(str(relative_path)):
-                return None
-        except ValueError:
-            return None
+        # 构建文件路径
+        file_path = os.path.join(self.business_dir, document_id)
         
         # 检查文件是否存在
-        if not full_path.exists() or not full_path.is_file():
+        if not os.path.isfile(file_path):
             return None
         
-        # 读取文件内容
-        content = full_path.read_text(encoding="utf-8")
-        
-        return {
-            "id": document_id,
-            "name": full_path.name,
-            "path": str(relative_path),
-            "content": content
-        }
+        try:
+            # 读取文件内容
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            # 创建文档对象
+            document = {
+                "id": document_id,
+                "name": os.path.basename(file_path),
+                "path": document_id,
+                "content": content,
+                "type": "file",
+                "size": os.path.getsize(file_path),
+                "last_modified": os.path.getmtime(file_path)
+            }
+            
+            # 缓存文档
+            self.documents_cache[document_id] = document
+            
+            return document
+            
+        except Exception as e:
+            print(f"读取文档错误: {str(e)}")
+            return None
     
-    async def get_document_metadata(self, document_id: str) -> Optional[Dict[str, Any]]:
-        """获取文档元数据"""
-        document = await self.get_document(document_id)
-        if not document:
-            return None
+    async def get_directory_structure(self) -> Dict[str, Any]:
+        """获取目录结构"""
+        def build_tree(path):
+            result = {}
+            for item in os.listdir(path):
+                item_path = os.path.join(path, item)
+                if os.path.isdir(item_path):
+                    result[item] = build_tree(item_path)
+                elif item.endswith('.md'):
+                    result[item] = None
+            return result
         
-        # 移除内容，只返回元数据
-        if "content" in document:
-            del document["content"]
-        
-        return document
+        return build_tree(self.business_dir)

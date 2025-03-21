@@ -1,221 +1,178 @@
+import asyncio
+import json
 import uuid
-from typing import Dict, Any, List, Optional, AsyncGenerator
-from services.document_service import DocumentService
-from manus.agent import LegalAnalysisAgent
+from typing import AsyncGenerator, Dict, List, Optional, Any
+from backend.openmanus.app.agent.manus import Manus
+from backend.openmanus.app.tool import FileOperatorsTool
 
 class ChatService:
-    """聊天服务，用于处理聊天交互和文档分析"""
+    """聊天服务，处理与OpenManus的交互"""
     
     def __init__(self):
-        self.document_service = DocumentService()
-        self.agent = LegalAnalysisAgent()
-        # 内存中存储聊天历史，实际应用中应该使用数据库
-        self.chat_history = {}
-        # 存储正在进行的分析任务
-        self.active_analyses = {}
+        self.chat_histories = {}  # 存储聊天历史
+        self.analysis_status = {}  # 存储分析状态
     
     async def process_message(self, message: str, chat_id: Optional[str] = None, document_id: Optional[str] = None) -> AsyncGenerator[Dict[str, Any], None]:
-        """处理聊天消息，返回分析进度和结果"""
+        """处理用户消息，返回流式响应"""
         # 如果没有聊天ID，创建一个新的
         if not chat_id:
             chat_id = str(uuid.uuid4())
-            self.chat_history[chat_id] = []
+            self.chat_histories[chat_id] = []
         
-        # 如果聊天ID不存在，创建一个新的
-        if chat_id not in self.chat_history:
-            self.chat_history[chat_id] = []
-        
-        # 添加用户消息到历史记录
-        self.chat_history[chat_id].append({
+        # 保存用户消息
+        user_message = {
+            "id": str(uuid.uuid4()),
             "role": "user",
-            "content": message
-        })
-        
-        # 获取文档内容
-        document_content = None
-        document = None
-        if document_id:
-            document = await self.document_service.get_document(document_id)
-            if document:
-                document_content = document.get("content", "")
-        
-        # 初始化分析任务
-        analysis_id = str(uuid.uuid4())
-        self.active_analyses[analysis_id] = {
-            "chat_id": chat_id,
-            "document_id": document_id,
-            "query": message,
-            "status": "planning",
-            "tasks": [],
-            "completed_tasks": [],
-            "current_task": None,
-            "references": []
+            "content": message,
+            "timestamp": asyncio.get_event_loop().time()
         }
         
-        # 返回初始状态
+        if chat_id in self.chat_histories:
+            self.chat_histories[chat_id].append(user_message)
+        else:
+            self.chat_histories[chat_id] = [user_message]
+        
+        # 返回用户消息确认
         yield {
-            "analysis_id": analysis_id,
-            "chat_id": chat_id,
-            "status": "planning",
-            "message": "正在分析您的问题..."
+            "type": "message",
+            "content": user_message,
+            "chat_id": chat_id
         }
         
-        # 如果没有文档内容，返回错误
-        if not document_content and document_id:
-            error_response = {
-                "analysis_id": analysis_id,
+        # 创建思考中的消息
+        thinking_id = str(uuid.uuid4())
+        thinking_message = {
+            "id": thinking_id,
+            "role": "thinking",
+            "content": "正在分析问题...",
+            "timestamp": asyncio.get_event_loop().time()
+        }
+        
+        # 返回思考中的消息
+        yield {
+            "type": "thinking",
+            "content": thinking_message,
+            "chat_id": chat_id,
+            "thinking_id": thinking_id
+        }
+        
+        # 创建OpenManus代理
+        agent = Manus()
+        file_tool = FileOperatorsTool()
+        agent.available_tools.add_tool(file_tool)
+        
+        # 构建分析提示语
+        prompt = f"""
+你是一个专业的法律分析助手，需要回答用户关于刑事案件的问题。
+
+用户问题: {message}
+
+请按照以下步骤进行分析：
+
+1. 首先，使用 file_operators 工具列出工作区中的所有目录，了解文件组织结构
+   - 使用参数：{{
+     "action": "list_directory",
+     "path": "."
+   }}
+
+2. 根据目录结构，逐个查看各个文件夹中的文件
+   - 例如：{{
+     "action": "list_directory",
+     "path": "诉讼文书卷"
+   }}
+
+3. 选择与用户问题相关的文件进行阅读
+   - 使用参数：{{
+     "action": "read_file",
+     "path": "文件路径"
+   }}
+
+4. 你也可以使用搜索功能查找特定信息：
+   - 使用参数：{{
+     "action": "search_files",
+     "path": ".",
+     "query": "关键词"
+   }}
+
+5. 在分析过程中，请特别关注：
+   - 证据链完整性：物证/书证/证人证言之间的对应关系是否一致
+   - 法律条文适用性：罪名与法条的匹配度是否合理
+   - 时间线逻辑：侦查/批捕/起诉时间节点是否合规
+
+6. 请以下面的格式提供分析结果：
+   - 清晰列出你的分析过程
+   - 提供具体的文件引用和证据支持
+   - 对于发现的问题，给出明确的解释
+
+请开始你的分析工作。在分析过程中，请清晰地指出你正在查看的文件和你从中发现的关键信息。
+"""
+        
+        # 设置回调函数来捕获代理的输出
+        async def output_callback(output: str):
+            # 更新思考消息
+            yield {
+                "type": "thinking_update",
+                "content": output,
                 "chat_id": chat_id,
-                "status": "error",
-                "message": "无法获取文档内容，请确认文档ID是否正确。"
+                "thinking_id": thinking_id
             }
-            
-            # 添加系统回复到历史记录
-            self.chat_history[chat_id].append({
-                "role": "assistant",
-                "content": error_response["message"]
-            })
-            
-            yield error_response
-            return
+        
+        agent.set_output_callback(output_callback)
         
         try:
-            # 使用Agent分析文档
-            if document_content:
-                # 如果有文档内容，使用Agent分析
-                async for result in self.agent.analyze_document(document_content, message):
-                    # 更新分析状态
-                    self._update_analysis_status(analysis_id, result)
-                    
-                    # 返回分析进度
-                    yield {
-                        "analysis_id": analysis_id,
-                        "chat_id": chat_id,
-                        "status": result.get("status", "processing"),
-                        "current_task": result.get("current_task", ""),
-                        "task_description": result.get("description", ""),
-                        "message": self._format_result_message(result)
-                    }
-                    
-                    # 如果分析完成，更新历史记录
-                    if result.get("status") == "finished":
-                        final_result = result.get("result", {})
-                        final_message = final_result.get("summary", "分析完成")
-                        references = final_result.get("references", [])
-                        
-                        # 添加系统回复到历史记录
-                        self.chat_history[chat_id].append({
-                            "role": "assistant",
-                            "content": final_message,
-                            "references": references
-                        })
-                        
-                        # 返回最终结果
-                        yield {
-                            "analysis_id": analysis_id,
-                            "chat_id": chat_id,
-                            "status": "finished",
-                            "message": final_message,
-                            "references": references
-                        }
-            else:
-                # 如果没有文档内容，直接回复
-                response_message = "请选择一个文档进行分析，或者提供更具体的问题。"
-                
-                # 添加系统回复到历史记录
-                self.chat_history[chat_id].append({
-                    "role": "assistant",
-                    "content": response_message
-                })
-                
-                # 返回结果
-                yield {
-                    "analysis_id": analysis_id,
-                    "chat_id": chat_id,
-                    "status": "finished",
-                    "message": response_message
-                }
-        except Exception as e:
-            # 处理异常
-            error_message = f"分析过程中发生错误: {str(e)}"
+            # 运行代理
+            result = await agent.run(prompt)
             
-            # 添加系统回复到历史记录
-            self.chat_history[chat_id].append({
+            # 创建助手回复
+            assistant_message = {
+                "id": str(uuid.uuid4()),
                 "role": "assistant",
-                "content": error_message
-            })
-            
-            # 返回错误
-            yield {
-                "analysis_id": analysis_id,
-                "chat_id": chat_id,
-                "status": "error",
-                "message": error_message
+                "content": result,
+                "timestamp": asyncio.get_event_loop().time()
             }
-        
-        # 分析完成后清理活动分析任务
-        if analysis_id in self.active_analyses:
-            del self.active_analyses[analysis_id]
-    
-    def _update_analysis_status(self, analysis_id: str, result: Dict[str, Any]) -> None:
-        """更新分析状态"""
-        if analysis_id not in self.active_analyses:
-            return
-        
-        analysis = self.active_analyses[analysis_id]
-        status = result.get("status")
-        
-        if status == "planning":
-            analysis["status"] = "planning"
-            analysis["tasks"] = result.get("tasks", [])
-        elif status == "processing":
-            analysis["status"] = "processing"
-            analysis["current_task"] = result.get("current_task")
-        elif status == "completed":
-            task = result.get("task")
-            task_result = result.get("result", {})
-            analysis["completed_tasks"].append({
-                "task": task,
-                "result": task_result
-            })
-        elif status == "finished":
-            analysis["status"] = "finished"
-            analysis["result"] = result.get("result", {})
-            analysis["references"] = result.get("result", {}).get("references", [])
-    
-    def _format_result_message(self, result: Dict[str, Any]) -> str:
-        """格式化结果消息"""
-        status = result.get("status")
-        
-        if status == "planning":
-            return "正在规划分析任务..."
-        elif status == "processing":
-            current_task = result.get("current_task", "")
-            description = result.get("description", "")
-            return f"正在执行任务: {description}"
-        elif status == "completed":
-            task = result.get("task", "")
-            task_result = result.get("result", {})
-            return f"任务完成: {task}"
-        elif status == "finished":
-            return "分析完成"
-        elif status == "error":
-            return result.get("message", "分析过程中发生错误")
-        else:
-            return "正在处理..."
+            
+            # 保存助手回复
+            self.chat_histories[chat_id].append(assistant_message)
+            
+            # 返回最终结果
+            yield {
+                "type": "message",
+                "content": assistant_message,
+                "chat_id": chat_id,
+                "remove_thinking": thinking_id
+            }
+            
+        except Exception as e:
+            # 处理错误
+            error_message = {
+                "id": str(uuid.uuid4()),
+                "role": "system",
+                "content": f"分析过程中出现错误: {str(e)}",
+                "timestamp": asyncio.get_event_loop().time()
+            }
+            
+            # 保存错误消息
+            self.chat_histories[chat_id].append(error_message)
+            
+            # 返回错误消息
+            yield {
+                "type": "error",
+                "content": error_message,
+                "chat_id": chat_id,
+                "remove_thinking": thinking_id
+            }
     
     async def get_history(self, chat_id: str) -> List[Dict[str, Any]]:
         """获取聊天历史"""
-        return self.chat_history.get(chat_id, [])
-    
-    async def get_analysis_status(self, analysis_id: str) -> Dict[str, Any]:
-        """获取分析状态"""
-        if analysis_id in self.active_analyses:
-            return self.active_analyses[analysis_id]
-        return {"status": "not_found", "message": "分析任务不存在"}
+        return self.chat_histories.get(chat_id, [])
     
     async def delete_chat(self, chat_id: str) -> bool:
         """删除聊天记录"""
-        if chat_id in self.chat_history:
-            del self.chat_history[chat_id]
+        if chat_id in self.chat_histories:
+            del self.chat_histories[chat_id]
             return True
         return False
+    
+    async def get_analysis_status(self, analysis_id: str) -> Dict[str, Any]:
+        """获取分析状态"""
+        return self.analysis_status.get(analysis_id, {"status": "not_found"})

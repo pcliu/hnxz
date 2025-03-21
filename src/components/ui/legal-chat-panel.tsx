@@ -28,6 +28,7 @@ import {
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
+import { sendChatMessage, getChatHistory, deleteChat } from '@/services/api';
 
 interface Message {
   id: string;
@@ -89,6 +90,8 @@ export function LegalChatPanel({ filePath, className, onMinimize }: LegalChatPan
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+
+
   // 提交消息
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -124,133 +127,138 @@ export function LegalChatPanel({ filePath, className, onMinimize }: LegalChatPan
     setTasks(newTasks);
 
     try {
-      // 模拟 AI 分析过程
-      // 1. 分析问题并生成 TODO 列表
-      setTimeout(() => {
-        setMessages((prev) => {
-          const updatedMessages = [...prev];
-          const thinkingIndex = updatedMessages.findIndex(m => m.id === thinkingMessage.id);
-          if (thinkingIndex !== -1) {
-            updatedMessages[thinkingIndex] = {
-              ...thinkingMessage,
-              content: '分析问题: 正在生成任务列表...\n\n待办任务:\n1. 分析文件内容\n2. 检查证据链完整性\n3. 验证法律条文适用性',
-            };
-          }
-          return updatedMessages;
-        });
-      }, 1000);
+      // 准备请求参数
+      const chatRequest = {
+        message: input,
+        chat_id: messages.length > 1 ? messages[0].id : undefined,
+        document_id: filePath || undefined
+      };
 
-      // 2. 执行子任务1
-      setTimeout(() => {
-        setMessages((prev) => {
-          const updatedMessages = [...prev];
-          const thinkingIndex = updatedMessages.findIndex(m => m.id === thinkingMessage.id);
-          if (thinkingIndex !== -1) {
-            updatedMessages[thinkingIndex] = {
-              ...thinkingMessage,
-              content: '分析问题: 已生成任务列表\n\n待办任务:\n1. ✓ 分析文件内容\n2. 检查证据链完整性\n3. 验证法律条文适用性\n\n正在分析文件内容...',
-            };
-          }
-          return updatedMessages;
-        });
-        
-        // 更新任务状态
-        setTasks(prev => {
-          const updated = [...prev];
-          const taskIndex = updated.findIndex(t => t.id === '1');
-          if (taskIndex !== -1) {
-            updated[taskIndex] = {
-              ...updated[taskIndex],
-              status: 'completed',
-              result: '文件内容分析完成，发现多处不一致。'
-            };
-          }
-          return updated;
-        });
-      }, 2000);
-
-      // 3. 执行子任务2
-      setTimeout(() => {
-        setMessages((prev) => {
-          const updatedMessages = [...prev];
-          const thinkingIndex = updatedMessages.findIndex(m => m.id === thinkingMessage.id);
-          if (thinkingIndex !== -1) {
-            updatedMessages[thinkingIndex] = {
-              ...thinkingMessage,
-              content: '分析问题: 已生成任务列表\n\n待办任务:\n1. ✓ 分析文件内容\n2. ✓ 检查证据链完整性\n3. 验证法律条文适用性\n\n正在验证法律条文适用性...',
-            };
-          }
-          return updatedMessages;
-        });
-        
-        // 更新任务状态
-        setTasks(prev => {
-          const updated = [...prev];
-          const taskIndex = updated.findIndex(t => t.id === '2');
-          if (taskIndex !== -1) {
-            updated[taskIndex] = {
-              ...updated[taskIndex],
-              status: 'completed',
-              result: '证据链存在缺失，物证与书证不匹配。'
-            };
-          }
-          return updated;
-        });
-      }, 3000);
-
-      // 4. 完成所有子任务并返回结果
-      setTimeout(() => {
-        // 更新任务状态
-        setTasks(prev => {
-          const updated = [...prev];
-          const taskIndex = updated.findIndex(t => t.id === '3');
-          if (taskIndex !== -1) {
-            updated[taskIndex] = {
-              ...updated[taskIndex],
-              status: 'completed',
-              result: '法律条文适用存在问题，罪名与证据不匹配。'
-            };
-          }
-          return updated;
-        });
-        
-        setMessages((prev) => {
-          const updatedMessages = [...prev];
-          const thinkingIndex = updatedMessages.findIndex(m => m.id === thinkingMessage.id);
-          if (thinkingIndex !== -1) {
-            // 移除思考消息
-            updatedMessages.splice(thinkingIndex, 1);
-          }
-          
-          // 添加 AI 回复
-          const aiResponse: Message = {
-            id: Date.now().toString(),
-            role: 'assistant',
-            content: `根据分析，我发现以下问题：\n\n1. **证据链不完整**：在《证据材料卷》中的物证与《侦查工作卷》中的描述存在不一致。\n\n2. **法律条文适用性问题**：根据《刑法》第232条关于故意杀人罪的规定，本案证据不足以支持该罪名。\n\n3. **时间线逻辑问题**：侦查时间与批捕时间存在超期情况，不符合刑事诉讼法规定的时限要求。`,
-            timestamp: new Date(),
-            references: [
-              {
-                text: '物证与侦查描述不一致',
-                filePath: '证据材料卷/前科证明.md',
-                position: { start: 120, end: 140 }
-              },
-              {
-                text: '证据不足以支持故意杀人罪名',
-                filePath: '故意杀人起诉 诉讼文书卷/判决书.md',
-                position: { start: 200, end: 220 }
-              },
-              {
-                text: '侦查时间与批捕时间存在超期情况',
-                filePath: '侦查卷/侦查报告.md',
-                position: { start: 300, end: 320 }
+      // 发送请求到后端API
+      sendChatMessage(
+        chatRequest,
+        (data: any) => {
+          // 处理流式响应数据
+          if (data.type === 'message') {
+            // 如果是最终消息，替换思考消息
+            if (data.remove_thinking) {
+              setMessages((prev) => {
+                const updatedMessages = [...prev];
+                const thinkingIndex = updatedMessages.findIndex(m => m.id === data.remove_thinking);
+                if (thinkingIndex !== -1) {
+                  updatedMessages.splice(thinkingIndex, 1);
+                }
+                return [...updatedMessages, {
+                  id: data.content.id,
+                  role: data.content.role,
+                  content: data.content.content,
+                  timestamp: new Date(data.content.timestamp),
+                  references: data.content.references
+                }];
+              });
+              setIsLoading(false);
+            }
+          } else if (data.type === 'thinking' || data.type === 'thinking_update') {
+            // 更新思考消息
+            setMessages((prev) => {
+              const updatedMessages = [...prev];
+              const thinkingIndex = updatedMessages.findIndex(m => m.id === data.thinking_id);
+              if (thinkingIndex !== -1) {
+                updatedMessages[thinkingIndex] = {
+                  ...updatedMessages[thinkingIndex],
+                  content: data.content,
+                };
               }
-            ]
-          };
+              return updatedMessages;
+            });
+
+            // 解析内容中的任务状态更新
+            const content = data.content;
+            if (typeof content === 'string' && content.includes('✓')) {
+              // 更新任务状态
+              if (content.includes('✓ 分析文件内容')) {
+                setTasks(prev => {
+                  const updated = [...prev];
+                  const taskIndex = updated.findIndex(t => t.id === '1');
+                  if (taskIndex !== -1) {
+                    updated[taskIndex] = {
+                      ...updated[taskIndex],
+                      status: 'completed',
+                      result: '文件内容分析完成'
+                    };
+                  }
+                  return updated;
+                });
+              }
+              if (content.includes('✓ 检查证据链完整性')) {
+                setTasks(prev => {
+                  const updated = [...prev];
+                  const taskIndex = updated.findIndex(t => t.id === '2');
+                  if (taskIndex !== -1) {
+                    updated[taskIndex] = {
+                      ...updated[taskIndex],
+                      status: 'completed',
+                      result: '证据链分析完成'
+                    };
+                  }
+                  return updated;
+                });
+              }
+              if (content.includes('✓ 验证法律条文适用性')) {
+                setTasks(prev => {
+                  const updated = [...prev];
+                  const taskIndex = updated.findIndex(t => t.id === '3');
+                  if (taskIndex !== -1) {
+                    updated[taskIndex] = {
+                      ...updated[taskIndex],
+                      status: 'completed',
+                      result: '法律条文验证完成'
+                    };
+                  }
+                  return updated;
+                });
+              }
+            }
+          } else if (data.type === 'error') {
+            // 处理错误
+            setMessages((prev) => {
+              const updatedMessages = [...prev];
+              const thinkingIndex = updatedMessages.findIndex(m => m.id === data.remove_thinking);
+              if (thinkingIndex !== -1) {
+                updatedMessages.splice(thinkingIndex, 1);
+              }
+              return [...updatedMessages, {
+                id: Date.now().toString(),
+                role: 'system',
+                content: data.content.content || '分析过程中出现错误，请稍后重试。',
+                timestamp: new Date(),
+              }];
+            });
+            setIsLoading(false);
+          }
+        },
+        (error: any) => {
+          // 处理错误
+          console.error('发送消息失败:', error);
+          setIsLoading(false);
           
-          return [...updatedMessages, aiResponse];
-        });
-        setIsLoading(false);
-      }, 4000);
+          // 添加错误消息
+          setMessages((prev) => {
+            const updatedMessages = [...prev];
+            const thinkingIndex = updatedMessages.findIndex(m => m.id === thinkingMessage.id);
+            if (thinkingIndex !== -1) {
+              updatedMessages.splice(thinkingIndex, 1);
+            }
+            
+            return [...updatedMessages, {
+              id: Date.now().toString(),
+              role: 'system',
+              content: '连接服务器失败，请检查网络连接后重试。',
+              timestamp: new Date(),
+            }];
+          });
+        }
+      );
     } catch (error) {
       console.error('发送消息失败:', error);
       setIsLoading(false);
@@ -299,9 +307,28 @@ export function LegalChatPanel({ filePath, className, onMinimize }: LegalChatPan
   };
 
   // 加载历史聊天
-  const loadChatHistory = (historyId: string) => {
-    // 在实际应用中，这里应该从后端加载历史聊天记录
-    console.log('加载历史聊天:', historyId);
+  const loadChatHistory = async (historyId: string) => {
+    try {
+      // 从后端加载历史聊天记录
+      const history = await getChatHistory(historyId);
+      if (history && Array.isArray(history)) {
+        // 转换时间戳为Date对象
+        const formattedMessages = history.map(msg => ({
+          ...msg,
+          timestamp: new Date(msg.timestamp)
+        }));
+        setMessages(formattedMessages);
+      }
+    } catch (error) {
+      console.error('加载历史聊天失败:', error);
+      // 显示错误消息
+      setMessages([{
+        id: Date.now().toString(),
+        role: 'system',
+        content: '加载历史聊天记录失败，请稍后重试。',
+        timestamp: new Date(),
+      }]);
+    }
   };
 
   return (
