@@ -12,7 +12,8 @@ def get_project_root() -> Path:
 
 
 PROJECT_ROOT = get_project_root()
-WORKSPACE_ROOT = PROJECT_ROOT / "workspace"
+# 将工作区路径指向 business 目录
+WORKSPACE_ROOT = PROJECT_ROOT.parent.parent / "business"
 
 
 class LLMSettings(BaseModel):
