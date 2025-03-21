@@ -147,7 +147,7 @@ class ToolCallAgent(ReActAgent):
                 result = result[: self.max_observe]
 
             logger.info(
-                f"🎯 Tool '{command.function.name}' completed its mission! Result: {result}"
+                f"🎯 工具 '{command.function.name}' 已完成任务！结果：{result}"
             )
 
             # Add tool response to memory
