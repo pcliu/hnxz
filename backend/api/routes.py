@@ -3,7 +3,7 @@ from fastapi.responses import StreamingResponse
 from typing import Optional, List, Dict, Any, AsyncGenerator
 from services.document_service import DocumentService
 from services.analysis_service import AnalysisService
-from services.chat_service import ChatService
+from services.chat_service_flow import ChatServiceFlow
 from pydantic import BaseModel
 import json
 import asyncio
@@ -14,7 +14,8 @@ router = APIRouter()
 # 服务实例
 document_service = DocumentService()
 analysis_service = AnalysisService()
-chat_service = ChatService()
+# chat_service = ChatService()
+chat_service = ChatServiceFlow()
 
 # 请求模型
 class ChatRequest(BaseModel):
