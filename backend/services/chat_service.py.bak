@@ -71,42 +71,19 @@ class ChatService:
 
 请按照以下步骤进行分析：
 
-1. 首先，使用 planning 工具创建一个分析计划：
-   - 使用参数：{{
-     "command": "create",
-     "plan_id": "case_analysis",
-     "title": "案件分析计划",
-     "steps": [
-       "了解文件组织结构",
-       "查看案件基本信息文件",
-       "分析证据材料",
-       "检查证人证言",
-       "分析法律文书",
-       "整合信息回答用户问题"
-     ]
-   }}
-
-2. 使用 file_operators 工具列出工作区中的所有目录，了解文件组织结构
+1. 首先，使用 file_operators 工具列出工作区中的所有目录，了解文件组织结构
    - 使用参数：{{
      "action": "list_directory",
      "path": "."
    }}
-   - 完成后，使用 planning 工具标记步骤完成：
-   {{
-     "command": "mark_step",
-     "plan_id": "case_analysis",
-     "step_index": 0,
-     "step_status": "completed",
-     "step_notes": "已了解文件组织结构"
-   }}
 
-3. 根据目录结构，逐个查看各个文件夹中的文件
+2. 根据目录结构，逐个查看各个文件夹中的文件
    - 例如：{{
      "action": "list_directory",
      "path": "诉讼文书卷"
    }}
 
-4. 选择与案件相关的文件进行阅读，特别关注以下几类文件：
+3. 选择与案件相关的文件进行阅读，特别关注以下几类文件：
    - 起诉书、判决书等法律文书
    - 证人证言
    - 鉴定意见
@@ -116,9 +93,8 @@ class ChatService:
      "action": "read_file",
      "path": "文件路径"
    }}
-   - 完成相关步骤后，使用 planning 工具标记对应步骤完成
 
-5. 你也可以使用搜索功能查找特定信息：
+4. 你也可以使用搜索功能查找特定信息：
    - 使用参数：{{
      "action": "search_files",
      "path": ".",
