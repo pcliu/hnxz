@@ -79,13 +79,20 @@ RUN chmod 777 /app/backend/db/sqlite/case_analysis.db
 ENV PYTHONPATH=/app:/app/backend
 ENV NODE_ENV=production
 
-# 暴露前端和后端端口
-EXPOSE 3000 8000
+# 暴露前端、后端和LiteLLM代理端口
+EXPOSE 3000 8000 8080
 
 # 创建启动脚本
 RUN echo '#!/bin/bash\n\
+# 启动LiteLLM代理服务器\n\
+cd /app/backend && python start_litellm_proxy.py & \n\
+# 等待LiteLLM代理服务器启动\n\
+sleep 5\n\
+# 启动后端服务\n\
 cd /app/backend && uvicorn main:app --host 0.0.0.0 --port 8000 --reload & \n\
+# 启动前端服务\n\
 cd /app && npm start\n\
+# 等待所有进程结束\n\
 wait\n' > /app/start.sh && chmod +x /app/start.sh
 
 # 设置启动命令
