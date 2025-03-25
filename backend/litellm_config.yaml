@@ -1,0 +1,27 @@
+# LiteLLM代理配置
+
+# 模型列表
+model_list:
+  - model_name: gpt-3.5-turbo
+    litellm_params:
+      model: deepseek/deepseek-r1-distill-qwen-32b
+      api_base: http://127.0.0.1:1234/v1
+      api_key: not-needed
+
+# 服务器设置
+server_settings:
+  port: 8080
+  host: 0.0.0.0
+
+# 特性标志
+feature_flags:
+  # 启用函数调用推断
+  infer_function_calling: true
+
+# 路由设置
+router_settings:
+  routing_strategy: simple-shuffle
+
+# 缓存设置
+cache_settings:
+  cache_enable: false
