@@ -53,6 +53,21 @@ graph TD
 - 使用 OpenManus 来实现后端的 Agent 功能
 - OpenManus 是由 Python 来实现的
 
+## 后端的workspace
+- 后端的workspace在 `business`
+
+## 后端配置
+- 后端配置文件在 `backend/openmanus/config/config.toml`
+- 配置文件中的 llm 部分，需要配置 LiteLLM 的地址
+- LiteLLM 的配置在 `backend/litellm.toml`
+
+## 后端服务的运行环境
+- 后端服务的运行环境在 `backend/venv_py312`
+
+
+
+
+
 
 
 
